@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bazar Colibrí · Bazar itinerante de productos y experiencias</title>
+  <meta name="description" content="Bazar Colibrí: bazar independiente e itinerante de productos locales, artesanía y experiencias. Conoce el catálogo, las próximas fechas y cómo participar.">
+  <meta name="theme-color" content="#07021a">
+  <meta property="og:title" content="Bazar Colibrí">
+  <meta property="og:description" content="Bazar independiente e itinerante de productos y experiencias.">
+  <meta property="og:image" content="assets/img/logo.jpg">
+  <link rel="icon" type="image/png" href="assets/img/favicon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Unbounded:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <!-- Fondo vivo: auroras, tormenta y chispas (detrás de todo) -->
+  <div class="sky" aria-hidden="true">
+    <span class="aurora aurora--1"></span>
+    <span class="aurora aurora--2"></span>
+    <span class="aurora aurora--3"></span>
+    <span class="aurora aurora--4"></span>
+    <span class="storm"></span>
+    <span class="grain"></span>
+  </div>
+
+  <!-- El colibrí 3D vuela sobre la página (no bloquea clics) -->
+  <canvas id="bird-canvas" aria-hidden="true"></canvas>
+
+  <a class="skip" href="#que-es">Saltar al contenido</a>
+
+  <header class="nav" id="nav">
+    <a class="nav__brand" href="#inicio" aria-label="Bazar Colibrí, inicio">
+      <img src="assets/img/logo.png" alt="" width="44" height="44">
+      <span><em>Colibrí</em> Bazar</span>
+    </a>
+    <button class="nav__toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Abrir menú">
+      <span></span><span></span>
+    </button>
+    <nav class="nav__links" id="nav-links">
+      <a href="#que-es">El bazar</a>
+      <a href="#catalogo">Catálogo</a>
+      <a href="#participantes">Participantes</a>
+      <a href="#fechas">Fechas</a>
+      <a href="#participa">Participa</a>
+      <a class="btn btn--small" href="#contacto">Contacto</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ================= INTRO ================= -->
+    <section class="hero" id="inicio" data-bird="0,0.17,0.82,1" data-bird-mobile="-0.04,0.22,0.6,1">
+      <div class="hero__rings" aria-hidden="true">
+        <span class="ring ring--1"></span>
+        <span class="ring ring--2"></span>
+        <span class="ring ring--3"></span>
+      </div>
+      <img class="hero__fallback" src="assets/img/logo.png" alt="" aria-hidden="true">
+
+      <div class="hero__content">
+        <p class="eyebrow reveal">Bazar independiente · Itinerante</p>
+        <h1 class="hero__title">
+          <span class="script reveal">Colibrí</span>
+          <span class="display reveal" data-text="BAZAR">BAZAR</span>
+        </h1>
+        <p class="hero__lead reveal">Productos hechos a mano, sabores locales y experiencias que vuelan de plaza en plaza. Como el colibrí: siempre en movimiento, siempre lleno de color.</p>
+        <div class="hero__cta reveal">
+          <a class="btn" href="#fechas">Próximas fechas</a>
+          <a class="btn btn--ghost" href="#participa">Quiero participar</a>
+        </div>
+      </div>
+
+      <a class="scroll-hint" href="#que-es" aria-label="Bajar">
+        <span></span>
+        Vuela con nosotros
+      </a>
+    </section>
+
+    <!-- ================= QUÉ ES ================= -->
+    <section class="section about" id="que-es" data-bird="0.3,0.2,0.4,-1" data-bird-mobile="0.25,0.37,0.24,-1">
+      <div class="container">
+        <header class="section__head reveal">
+          <p class="eyebrow">El bazar</p>
+          <h2 class="title">Un bazar que <span class="grad">no se queda quieto</span></h2>
+          <p class="section__lead">Bazar Colibrí reúne a creadores independientes, productores locales y talleristas en un mismo lugar… que cambia de lugar. Cada edición se instala en un espacio distinto de la ciudad para acercar lo hecho a mano a vecinos y viajeros.</p>
+        </header>
+
+        <div class="pillars">
+          <article class="pillar tilt reveal">
+            <div class="pillar__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><path d="M8 20 24 8l16 12v20H8z" /><path d="M18 40V28h12v12" /></svg>
+            </div>
+            <h3>Hecho local</h3>
+            <p>Artesanía, diseño, gastronomía y productos de pequeños emprendimientos de la zona.</p>
+          </article>
+          <article class="pillar tilt reveal">
+            <div class="pillar__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><circle cx="24" cy="20" r="7" /><path d="M24 44S10 30 10 20a14 14 0 0 1 28 0c0 10-14 24-14 24z" /></svg>
+            </div>
+            <h3>Itinerante</h3>
+            <p>Plazas, patios, centros culturales. Vamos donde está la gente y cada edición es distinta.</p>
+          </article>
+          <article class="pillar tilt reveal">
+            <div class="pillar__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><path d="M24 6l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z" /></svg>
+            </div>
+            <h3>Experiencias</h3>
+            <p>Talleres, música en vivo y actividades para vivir el bazar, no solo recorrerlo.</p>
+          </article>
+          <article class="pillar tilt reveal">
+            <div class="pillar__icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48"><circle cx="16" cy="18" r="6" /><circle cx="32" cy="18" r="6" /><path d="M6 40c0-7 5-12 10-12s10 5 10 12M22 40c0-7 5-12 10-12s10 5 10 12" /></svg>
+            </div>
+            <h3>Comunidad</h3>
+            <p>Para locales y turistas: un punto de encuentro para descubrir el talento de la ciudad.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CATÁLOGO ================= -->
+    <section class="section catalog" id="catalogo" data-bird="0.36,0.1,0.34,-1" data-bird-mobile="0.25,0.37,0.24,-1">
+      <div class="container">
+        <header class="section__head reveal">
+          <p class="eyebrow">Catálogo</p>
+          <h2 class="title">Lo que encontrarás <span class="grad">en cada vuelo</span></h2>
+          <p class="section__lead">Una muestra de lo que llega a nuestras mesas. El catálogo cambia en cada edición según los expositores invitados.</p>
+        </header>
+
+        <div class="filters reveal" role="tablist" aria-label="Filtrar catálogo">
+          <button class="chip is-active" data-filter="todo" role="tab" aria-selected="true">Todo</button>
+          <button class="chip" data-filter="artesania" role="tab" aria-selected="false">Artesanía</button>
+          <button class="chip" data-filter="moda" role="tab" aria-selected="false">Moda y textil</button>
+          <button class="chip" data-filter="sabores" role="tab" aria-selected="false">Sabores</button>
+          <button class="chip" data-filter="bienestar" role="tab" aria-selected="false">Bienestar</button>
+          <button class="chip" data-filter="experiencias" role="tab" aria-selected="false">Experiencias</button>
+        </div>
+
+        <!-- EDITAR: productos de ejemplo. Duplica un <article> para agregar más. -->
+        <div class="grid products">
+          <article class="product tilt reveal" data-category="artesania" data-bird-visit style="--c1:#ff1ed2;--c2:#ffe14d">
+            <div class="product__art" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><path d="M40 30h40l-4 10c14 6 22 18 22 32 0 20-17 34-38 34S22 92 22 72c0-14 8-26 22-32z" /><path d="M34 70c10 6 42 6 52 0" /></svg>
+            </div>
+            <span class="tag">Artesanía</span>
+            <h3>Cerámica pintada a mano</h3>
+            <p>Tazas, maceteros y piezas únicas de alfarería local.</p>
+          </article>
+          <article class="product tilt reveal" data-category="moda" data-bird-visit style="--c1:#ba20d9;--c2:#19e6ff">
+            <div class="product__art" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><path d="M42 18 22 32l10 18 8-4v56h40V46l8 4 10-18-20-14c-2 8-10 12-18 12s-16-4-18-12z" /></svg>
+            </div>
+            <span class="tag">Moda y textil</span>
+            <h3>Prendas y tejidos</h3>
+            <p>Diseño independiente, telar, bordado y ropa reutilizada.</p>
+          </article>
+          <article class="product tilt reveal" data-category="sabores" data-bird-visit style="--c1:#ffe14d;--c2:#ff5a36">
+            <div class="product__art" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><path d="M38 34h44v10c0 4 6 8 6 18v38a6 6 0 0 1-6 6H38a6 6 0 0 1-6-6V62c0-10 6-14 6-18z" /><path d="M38 24h44v10H38zM32 70h56" /></svg>
+            </div>
+            <span class="tag">Sabores</span>
+            <h3>Conservas y dulces</h3>
+            <p>Mermeladas, miel, panes y bocados de productores de la zona.</p>
+          </article>
+          <article class="product tilt reveal" data-category="artesania" data-bird-visit style="--c1:#19e6ff;--c2:#1e1edb">
+            <div class="product__art" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><circle cx="60" cy="72" r="26" /><path d="M60 46V20M48 26l12-8 12 8M60 58l-6 14 6 14 6-14z" /></svg>
+            </div>
+            <span class="tag">Artesanía</span>
+            <h3>Joyería de autor</h3>
+            <p>Plata, piedras, resina y metales trabajados por sus creadores.</p>
+          </article>
+          <article class="product tilt reveal" data-category="bienestar" data-bird-visit style="--c1:#39ff88;--c2:#19e6ff">
+            <div class="product__art" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><path d="M60 100C30 90 22 60 30 30c20 4 34 18 30 70zM60 100c30-10 38-40 30-70-20 4-34 18-30 70z" /></svg>
+            </div>
+            <span class="tag">Bienestar</span>
+            <h3>Plantas y cosmética natural</h3>
+            <p>Suculentas, jabones, velas y aromas elaborados en pequeño lote.</p>
+          </article>
+          <article class="product tilt reveal" data-category="experiencias" data-bird-visit style="--c1:#ff1ed2;--c2:#ba20d9">
+            <div class="product__art" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><path d="M44 86V30l44-10v56" /><circle cx="34" cy="86" r="10" /><circle cx="78" cy="76" r="10" /><path d="M44 42l44-10" /></svg>
+            </div>
+            <span class="tag">Experiencias</span>
+            <h3>Música y escenario abierto</h3>
+            <p>Artistas locales acompañan cada edición del bazar.</p>
+          </article>
+          <article class="product tilt reveal" data-category="experiencias" data-bird-visit style="--c1:#ffe14d;--c2:#39ff88">
+            <div class="product__art" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><path d="M28 92 70 50M62 42l16 16 22-22-16-16z" /><path d="M20 100c6 0 10-4 10-10" /></svg>
+            </div>
+            <span class="tag">Experiencias</span>
+            <h3>Talleres en vivo</h3>
+            <p>Aprende de los propios creadores: pintura, tejido, cerámica y más.</p>
+          </article>
+          <article class="product tilt reveal" data-category="moda" data-bird-visit style="--c1:#1e1edb;--c2:#ff1ed2">
+            <div class="product__art" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><path d="M30 44h60l-6 56H36zM44 44c0-10 6-18 16-18s16 8 16 18" /></svg>
+            </div>
+            <span class="tag">Moda y textil</span>
+            <h3>Accesorios y bolsos</h3>
+            <p>Cuero, lona y materiales reciclados con diseño propio.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PARTICIPANTES ================= -->
+    <section class="section makers" id="participantes" data-bird="0.26,0.24,0.38,1" data-bird-mobile="0.25,0.37,0.24,1">
+      <div class="container">
+        <header class="section__head reveal">
+          <p class="eyebrow">Participantes destacados</p>
+          <h2 class="title">Las alas <span class="grad">del bazar</span></h2>
+          <p class="section__lead">Emprendimientos que vuelven edición tras edición y le dan su identidad al Bazar Colibrí.</p>
+        </header>
+
+        <!-- EDITAR: reemplaza los nombres de ejemplo por los expositores reales -->
+        <div class="makers__track">
+          <article class="maker tilt reveal" data-bird-visit>
+            <div class="maker__avatar" style="--c1:#ff1ed2;--c2:#ffe14d">BV</div>
+            <h3>Barro Vivo</h3>
+            <p class="maker__role">Cerámica de autor</p>
+            <p>Piezas utilitarias esmaltadas en colores intensos.</p>
+            <span class="badge">Nombre de ejemplo</span>
+          </article>
+          <article class="maker tilt reveal" data-bird-visit>
+            <div class="maker__avatar" style="--c1:#1e1edb;--c2:#19e6ff">HN</div>
+            <h3>Hilo &amp; Nido</h3>
+            <p class="maker__role">Textil y bordado</p>
+            <p>Bordados florales y tejidos a telar con fibras naturales.</p>
+            <span class="badge">Nombre de ejemplo</span>
+          </article>
+          <article class="maker tilt reveal" data-bird-visit>
+            <div class="maker__avatar" style="--c1:#39ff88;--c2:#ffe14d">NF</div>
+            <h3>Néctar de Flor</h3>
+            <p class="maker__role">Miel y conservas</p>
+            <p>Mieles, mermeladas y dulces de productores de la zona.</p>
+            <span class="badge">Nombre de ejemplo</span>
+          </article>
+          <article class="maker tilt reveal" data-bird-visit>
+            <div class="maker__avatar" style="--c1:#ba20d9;--c2:#ff1ed2">PL</div>
+            <h3>Pluma Lunar</h3>
+            <p class="maker__role">Joyería</p>
+            <p>Joyas inspiradas en aves y flores, hechas en plata.</p>
+            <span class="badge">Nombre de ejemplo</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FECHAS Y LUGARES ================= -->
+    <section class="section events" id="fechas" data-bird="0.34,0.14,0.36,-1" data-bird-mobile="0.25,0.37,0.24,-1">
+      <div class="container">
+        <header class="section__head reveal">
+          <p class="eyebrow">Fechas y lugares</p>
+          <h2 class="title">¿Dónde se posa <span class="grad">el colibrí?</span></h2>
+          <p class="section__lead">El bazar cambia de lugar. Revisa las próximas ediciones y guarda la fecha.</p>
+        </header>
+
+        <!-- EDITAR: fechas y lugares de ejemplo -->
+        <ol class="timeline">
+          <li class="event reveal" data-bird-visit>
+            <time class="event__date" datetime="2026-10-17"><span class="d">17</span><span class="m">Oct</span></time>
+            <div class="event__body">
+              <h3>Edición Plaza</h3>
+              <p class="event__place">Plaza principal · lugar por confirmar</p>
+              <p class="event__time">Sábado · 11:00 a 19:00</p>
+            </div>
+            <span class="event__pill">Recurrente</span>
+          </li>
+          <li class="event reveal" data-bird-visit>
+            <time class="event__date" datetime="2026-11-14"><span class="d">14</span><span class="m">Nov</span></time>
+            <div class="event__body">
+              <h3>Edición Centro Cultural</h3>
+              <p class="event__place">Centro cultural · lugar por confirmar</p>
+              <p class="event__time">Sábado · 12:00 a 20:00</p>
+            </div>
+            <span class="event__pill event__pill--alt">Con talleres</span>
+          </li>
+          <li class="event reveal" data-bird-visit>
+            <time class="event__date" datetime="2026-12-12"><span class="d">12</span><span class="m">Dic</span></time>
+            <div class="event__body">
+              <h3>Edición Navidad</h3>
+              <p class="event__place">Parque · lugar por confirmar</p>
+              <p class="event__time">Sábado y domingo · 11:00 a 21:00</p>
+            </div>
+            <span class="event__pill event__pill--hot">Especial</span>
+          </li>
+        </ol>
+
+        <div class="recurring reveal">
+          <div>
+            <h3>Cada mes, un nuevo lugar</h3>
+            <p>Anunciamos la ubicación de cada edición con anticipación en nuestras redes y por WhatsApp.</p>
+          </div>
+          <a class="btn" href="#contacto">Avísenme</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PARTICIPA ================= -->
+    <section class="section join" id="participa" data-bird="-0.3,-0.3,0.34,1" data-bird-mobile="0.25,0.37,0.24,-1">
+      <div class="container join__grid">
+        <header class="section__head reveal">
+          <p class="eyebrow">Participa</p>
+          <h2 class="title">Súmate a <span class="grad">la bandada</span></h2>
+          <p class="section__lead">¿Tienes un emprendimiento, producto o taller? Postula para exponer en las próximas ediciones.</p>
+          <ul class="checks">
+            <li>Productos hechos a mano, locales o de autor</li>
+            <li>Talleres, música y experiencias</li>
+            <li>Espacios limitados por edición</li>
+          </ul>
+        </header>
+
+        <form class="form reveal" id="join-form" novalidate>
+          <div class="field">
+            <label for="f-name">Tu nombre</label>
+            <input id="f-name" name="nombre" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="f-brand">Emprendimiento</label>
+            <input id="f-brand" name="emprendimiento" required>
+          </div>
+          <div class="field">
+            <label for="f-cat">Categoría</label>
+            <select id="f-cat" name="categoria" required>
+              <option value="">Elige una</option>
+              <option>Artesanía</option>
+              <option>Moda y textil</option>
+              <option>Sabores</option>
+              <option>Bienestar</option>
+              <option>Experiencias / talleres</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-social">Instagram o web</label>
+            <input id="f-social" name="redes" placeholder="@tuemprendimiento">
+          </div>
+          <div class="field">
+            <label for="f-contact">Email o teléfono</label>
+            <input id="f-contact" name="contacto" required>
+          </div>
+          <div class="field field--full">
+            <label for="f-msg">Cuéntanos de tu proyecto</label>
+            <textarea id="f-msg" name="mensaje" rows="4"></textarea>
+          </div>
+          <button class="btn btn--wide" type="submit">Enviar postulación</button>
+          <p class="form__note" id="form-note" role="status"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- ================= CONTACTO ================= -->
+    <section class="section contact" id="contacto" data-bird="-0.3,0.2,0.4,1" data-bird-mobile="0.25,0.37,0.24,-1">
+      <div class="container">
+        <header class="section__head section__head--center reveal">
+          <p class="eyebrow">Contacto</p>
+          <h2 class="title">Hablemos <span class="grad">directo</span></h2>
+          <p class="section__lead">Para visitas, alianzas, prensa o auspicios, escríbenos por el canal que prefieras.</p>
+        </header>
+
+        <div class="contact__grid">
+          <a class="contact-card tilt reveal" data-contact="whatsapp" href="#" data-bird-visit>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.3.4c-.1.1-.2.3-.1.5.2.3.7 1.2 1.5 1.9 1 .9 1.9 1.2 2.2 1.3.2.1.4.1.5-.1l.7-.9c.2-.2.3-.2.6-.1l1.9.9c.3.1.4.2.5.3.1.2.1.7-.1 1.2z" /></svg>
+            <h3>WhatsApp</h3>
+            <p>Respuesta rápida</p>
+          </a>
+          <a class="contact-card tilt reveal" data-contact="instagram" href="#" data-bird-visit>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm5 3.5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM17.5 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" /></svg>
+            <h3>Instagram</h3>
+            <p>Novedades y fechas</p>
+          </a>
+          <a class="contact-card tilt reveal" data-contact="email" href="#" data-bird-visit>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm1 2.3V17h16V7.3l-8 5.4zM5.2 7 12 11.6 18.8 7z" /></svg>
+            <h3>Correo</h3>
+            <p>Alianzas y prensa</p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <img src="assets/img/logo.png" alt="Logo Bazar Colibrí" width="96" height="96" loading="lazy">
+    <p><em>Colibrí</em> Bazar · Bazar independiente e itinerante</p>
+    <p class="footer__small">© <span id="year">2026</span> Bazar Colibrí</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/main.js" defer></script>
+  <script type="module" src="assets/js/hummingbird.js"></script>
+</body>
+</html>
