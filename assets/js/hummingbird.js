@@ -32,6 +32,9 @@ const canvas = document.getElementById('bird-canvas');
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // ?snap: coloca el ave directo en su posada (útil para capturas / equipos lentos)
 const SNAP = new URLSearchParams(location.search).has('snap');
+// ?record: reloj virtual avanzado a mano con window.__birdStep(dt), para
+// grabar videos cuadro por cuadro en equipos lentos
+const RECORD = new URLSearchParams(location.search).has('record');
 
 function webglAvailable() {
   try {
@@ -343,7 +346,7 @@ function init(meta, textures) {
 
   document.addEventListener('visibilitychange', () => {
     running = !document.hidden;
-    if (running) { clock.getDelta(); loop(); }
+    if (running && !RECORD) { clock.getDelta(); loop(); }
   });
 
   window.addEventListener('resize', resize);
@@ -357,14 +360,15 @@ function init(meta, textures) {
     document.documentElement.classList.add('bird-ready');
   }, 250);
 
+  let vTime = 0, vStep = 0;
   function loop() {
     if (!running) return;
-    requestAnimationFrame(loop);
-    const dt = Math.min(clock.getDelta(), 0.05);
-    const t = clock.elapsedTime;
+    if (!RECORD) requestAnimationFrame(loop);
+    const dt = RECORD ? vStep : Math.min(clock.getDelta(), 0.05);
+    const t = RECORD ? vTime : clock.elapsedTime;
 
     // intro por reloj real (no depende de los FPS)
-    intro = Math.min(1, (performance.now() - bornAt) / 1600);
+    intro = Math.min(1, (RECORD ? vTime * 1000 : performance.now() - bornAt) / 1600);
     const introEase = 1 - Math.pow(1 - intro, 3);
 
     // Velocidad de scroll (suavizada)
@@ -467,5 +471,9 @@ function init(meta, textures) {
 
     renderer.render(scene, camera);
   }
-  loop();
+  if (RECORD) {
+    window.__birdStep = (d) => { vStep = d; vTime += d; loop(); };
+  } else {
+    loop();
+  }
 }
