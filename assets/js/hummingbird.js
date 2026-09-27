@@ -1,14 +1,22 @@
 /* =========================================================================
    Bazar Colibrí — Colibrí 3D
-   Un colibrí construido 100% en código (sin modelos externos) con Three.js.
+   El colibrí se arma con la ilustración del propio logo, separada en capas
+   (ala, cuerpo, cola, aura de acuarela) y montada en 3D con Three.js:
+   - Ala cercana que aletea sobre su articulación real, con estela de movimiento.
+   - Ala lejana en tono más oscuro que da profundidad.
+   - Cola con espirales que ondula; aura de acuarela que respira.
+   - Capas a distinta profundidad: al girar se desplazan (paralaje 3D).
+   Movimiento:
    - Intro: aparece en el centro sobre el fondo luminiscente.
    - Scroll: vuela entre "posadas" (data-bird en cada sección), gira hacia
      donde va, se inclina con la velocidad y deja una estela de polen.
    - Reposo: aletea en el lugar y hace pequeños "dardos" como uno real.
    - Hover en tarjetas: se acerca a "libar" la tarjeta.
+   Las capas se generan con tools/split_logo.py a partir del logo.
    ========================================================================= */
 // Three.js se carga DESPUÉS de pintar la página, para que el sitio aparezca rápido
 const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js';
+const LAYERS_URL = 'assets/img/bird/';
 let THREE;
 
 const PALETTE = {
@@ -18,8 +26,6 @@ const PALETTE = {
   cyan: 0x19e6ff,
   yellow: 0xffe14d,
   lime: 0x39ff88,
-  orange: 0xff5a36,
-  navy: 0x0d0b52,
 };
 
 const canvas = document.getElementById('bird-canvas');
@@ -42,7 +48,12 @@ if (!canvas || !webglAvailable()) {
   const boot = async () => {
     try {
       THREE = await import(THREE_URL);
-      init();
+      const meta = await fetch(LAYERS_URL + 'bird.json').then((r) => r.json());
+      const loader = new THREE.TextureLoader();
+      const names = ['aura', 'tail', 'body', 'wing'];
+      const tex = await Promise.all(names.map((n) => loader.loadAsync(LAYERS_URL + n + '.webp')));
+      const textures = Object.fromEntries(names.map((n, i) => [n, tex[i]]));
+      init(meta, textures);
     } catch (e) {
       document.documentElement.classList.add('no-webgl');
     }
@@ -52,13 +63,12 @@ if (!canvas || !webglAvailable()) {
   else window.addEventListener('load', later, { once: true });
 }
 
-function init() {
+function init(meta, textures) {
   /* ---------- Renderer / escena / cámara ---------- */
   const small = window.innerWidth < 760;
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !small, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1.25 : 2));
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.95;
+  const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
@@ -74,55 +84,6 @@ function init() {
     viewH = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
     viewW = viewH * camera.aspect;
     rebuildAnchors();
-  }
-
-  /* ---------- Luces: tempestad de color ---------- */
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const key = new THREE.DirectionalLight(0xffffff, 1.5);
-  key.position.set(2, 4, 6);
-  scene.add(key);
-  const rimMagenta = new THREE.PointLight(PALETTE.magenta, 40, 20, 2);
-  rimMagenta.position.set(-4, 2, 2);
-  scene.add(rimMagenta);
-  const rimCyan = new THREE.PointLight(PALETTE.cyan, 35, 20, 2);
-  rimCyan.position.set(4, -1, 3);
-  scene.add(rimCyan);
-  const back = new THREE.PointLight(PALETTE.violet, 30, 20, 2);
-  back.position.set(0, 1, -4);
-  scene.add(back);
-
-  /* ---------- Utilidades ---------- */
-  const tmpColor = new THREE.Color();
-  function gradientColors(geometry, stops, axis = 'y', min, max) {
-    const pos = geometry.attributes.position;
-    const colors = new Float32Array(pos.count * 3);
-    const idx = { x: 0, y: 1, z: 2 }[axis];
-    if (min === undefined || max === undefined) {
-      geometry.computeBoundingBox();
-      min = geometry.boundingBox.min.getComponent(idx);
-      max = geometry.boundingBox.max.getComponent(idx);
-    }
-    for (let i = 0; i < pos.count; i++) {
-      const t = THREE.MathUtils.clamp((pos.getComponent(i, idx) - min) / (max - min || 1), 0, 1);
-      sampleStops(stops, t, tmpColor);
-      colors[i * 3] = tmpColor.r;
-      colors[i * 3 + 1] = tmpColor.g;
-      colors[i * 3 + 2] = tmpColor.b;
-    }
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  }
-  const cA = new THREE.Color(), cB = new THREE.Color();
-  function sampleStops(stops, t, out) {
-    for (let i = 0; i < stops.length - 1; i++) {
-      const [t0, c0] = stops[i];
-      const [t1, c1] = stops[i + 1];
-      if (t >= t0 && t <= t1) {
-        const k = (t - t0) / (t1 - t0 || 1);
-        cA.set(c0); cB.set(c1);
-        return out.copy(cA).lerp(cB, k);
-      }
-    }
-    return out.set(stops[stops.length - 1][1]);
   }
 
   function glowTexture() {
@@ -141,7 +102,12 @@ function init() {
   }
   const glowTex = glowTexture();
 
-  /* ---------- Construcción del colibrí ---------- */
+  /* ---------- Colibrí: capas del logo en 3D ---------- */
+  // 1 unidad de mundo ≈ 190 px del logo; origen en el centro del ave
+  const PX = 1 / 190;
+  const [CX, CY] = meta.center;
+  const toWorld = (x, y) => new THREE.Vector2((x - CX) * PX, -(y - CY) * PX);
+
   const bird = new THREE.Group();       // posición/escala en pantalla
   const heading = new THREE.Group();    // giro hacia la dirección de vuelo
   const model = new THREE.Group();      // actitud (cabeceo, balanceo)
@@ -149,201 +115,82 @@ function init() {
   heading.add(model);
   scene.add(bird);
 
-  const iridescent = (opts = {}) => new THREE.MeshPhysicalMaterial({
-    vertexColors: true,
-    roughness: 0.28,
-    metalness: 0.25,
-    clearcoat: 1,
-    clearcoatRoughness: 0.2,
-    iridescence: 1,
-    iridescenceIOR: 1.6,
-    iridescenceThicknessRange: [200, 600],
-    ...opts,
+  Object.values(textures).forEach((t) => {
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = maxAniso;
   });
 
-  // Cuerpo: torpedo con torno (Lathe) orientado hacia +X (cabeza)
-  const profile = [
-    [0.001, -1.05], [0.08, -0.95], [0.2, -0.75], [0.33, -0.45], [0.42, -0.12],
-    [0.45, 0.15], [0.41, 0.4], [0.3, 0.62], [0.16, 0.74], [0.001, 0.78],
-  ].map(([r, y]) => new THREE.Vector2(r, y));
-  const bodyGeo = new THREE.LatheGeometry(profile, 48);
-  bodyGeo.rotateZ(-Math.PI / 2);
-  bodyGeo.scale(1, 1, 0.88);
-  gradientColors(bodyGeo, [
-    [0, PALETTE.lime], [0.35, PALETTE.cyan], [0.62, 0x2d5bff], [1, PALETTE.blue],
-  ], 'y', -0.45, 0.45);
-  const body = new THREE.Mesh(bodyGeo, iridescent());
-  model.add(body);
-
-  // Cabeza
-  const headGeo = new THREE.SphereGeometry(0.34, 40, 28);
-  gradientColors(headGeo, [[0, PALETTE.cyan], [0.45, 0x2d5bff], [1, PALETTE.blue]], 'y');
-  const head = new THREE.Mesh(headGeo, iridescent());
-  head.position.set(0.86, 0.16, 0);
-  model.add(head);
-
-  // Garganta brillante (gorguera)
-  const gorgetGeo = new THREE.SphereGeometry(0.3, 32, 20, 0, Math.PI * 2, Math.PI * 0.45, Math.PI * 0.4);
-  gradientColors(gorgetGeo, [[0, PALETTE.lime], [1, PALETTE.cyan]], 'y');
-  const gorget = new THREE.Mesh(gorgetGeo, iridescent({ emissive: 0x0a5a55, emissiveIntensity: 0.6 }));
-  gorget.position.set(0.74, 0.02, 0);
-  gorget.rotation.z = 0.5;
-  model.add(gorget);
-
-  // Pico largo y fino
-  const beakGeo = new THREE.ConeGeometry(0.05, 1.25, 16);
-  beakGeo.rotateZ(-Math.PI / 2);
-  gradientColors(beakGeo, [[0, 0x2a2acf], [1, PALETTE.navy]], 'x');
-  const beak = new THREE.Mesh(beakGeo, new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.3, metalness: 0.5, clearcoat: 1 }));
-  beak.position.set(1.72, 0.1, 0);
-  beak.rotation.z = -0.1;
-  model.add(beak);
-
-  // Ojos con brillo
-  const eyeMat = new THREE.MeshPhysicalMaterial({ color: 0x050505, roughness: 0.05, clearcoat: 1 });
-  const sparkMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const eyeRingMat = new THREE.MeshBasicMaterial({ color: 0xe8f7ff });
-  [-1, 1].forEach((s) => {
-    const ring = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 14), eyeRingMat);
-    ring.position.set(1.0, 0.24, s * 0.235);
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.072, 20, 14), eyeMat);
-    eye.position.set(1.005, 0.24, s * 0.255);
-    const spark = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), sparkMat);
-    spark.position.set(1.03, 0.27, s * 0.315);
-    model.add(ring, eye, spark);
-  });
-
-  // Plumas: forma de hoja con degradado (verde → amarillo → rojo → magenta)
-  function featherGeometry(length, width, stops) {
-    const s = new THREE.Shape();
-    s.moveTo(0, 0);
-    s.bezierCurveTo(width * 0.65, length * 0.18, width * 0.6, length * 0.78, 0, length);
-    s.bezierCurveTo(-width * 0.5, length * 0.8, -width * 0.55, length * 0.2, 0, 0);
-    const g = new THREE.ShapeGeometry(s, 14);
-    gradientColors(g, stops, 'y', 0, length);
-    return g;
-  }
-  const featherMat = new THREE.MeshPhysicalMaterial({
-    vertexColors: true,
-    side: THREE.DoubleSide,
-    roughness: 0.4,
-    metalness: 0.1,
-    iridescence: 0.25,
-    iridescenceIOR: 1.3,
-    emissive: 0x2a0020,
-    emissiveIntensity: 0.3,
-  });
-
-  function buildWing(side) {
-    const pivot = new THREE.Group();
-    pivot.position.set(0.18, 0.3, side * 0.2);
-    const plane = new THREE.Group();
-    // Plano local XY → X = envergadura (±Z mundo), Y = cuerda (X mundo), normal → Y mundo
-    const m = new THREE.Matrix4().makeBasis(
-      new THREE.Vector3(0, 0, side),
-      new THREE.Vector3(1, 0, 0),
-      new THREE.Vector3(0, side, 0),
-    );
-    plane.quaternion.setFromRotationMatrix(m);
-    pivot.add(plane);
-
-    const primaryStops = [
-      [0, PALETTE.lime], [0.22, PALETTE.yellow], [0.45, PALETTE.orange], [0.62, PALETTE.magenta], [1, 0xff4fe0],
-    ];
-    const N = 11;
-    for (let i = 0; i < N; i++) {
-      const t = i / (N - 1);
-      const len = THREE.MathUtils.lerp(0.62, 1.75, Math.pow(t, 0.8));
-      const geo = featherGeometry(len, THREE.MathUtils.lerp(0.2, 0.26, t), primaryStops);
-      const f = new THREE.Mesh(geo, featherMat);
-      const angle = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-100, -12, t)); // desde la envergadura, hacia atrás
-      f.rotation.z = angle - Math.PI / 2;
-      f.position.set(0.06 + 0.5 * t, -0.02 * t, i * 0.004);
-      plane.add(f);
+  let order = 0;
+  // Crea el plano de una capa. Si se pasa un pivote (en px del logo), la capa
+  // queda colgando de ese punto para poder rotarla sobre él.
+  function layer(name, z, { pivot, tint, opacity = 1, blending } = {}) {
+    const L = meta.layers[name];
+    const mat = new THREE.MeshBasicMaterial({
+      map: textures[name],
+      transparent: true,
+      opacity,
+      side: THREE.DoubleSide,
+      depthWrite: false,
+      toneMapped: false,
+      color: tint ?? 0xffffff,
+      blending: blending ?? THREE.NormalBlending,
+    });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(L.w * PX, L.h * PX), mat);
+    const c = toWorld(L.x + L.w / 2, L.y + L.h / 2);
+    const group = new THREE.Group();
+    if (pivot) {
+      const p = toWorld(pivot[0], pivot[1]);
+      group.position.set(p.x, p.y, z);
+      mesh.position.set(c.x - p.x, c.y - p.y, 0);
+    } else {
+      group.position.set(0, 0, z);
+      mesh.position.set(c.x, c.y, 0);
     }
-    // Coberteras: plumas cortas verde/cian sobre la base
-    const covertStops = [[0, PALETTE.cyan], [0.6, PALETTE.lime], [1, PALETTE.yellow]];
-    for (let i = 0; i < 8; i++) {
-      const t = i / 7;
-      const geo = featherGeometry(THREE.MathUtils.lerp(0.35, 0.55, t), 0.2, covertStops);
-      const f = new THREE.Mesh(geo, featherMat);
-      f.rotation.z = THREE.MathUtils.degToRad(THREE.MathUtils.lerp(-105, -40, t)) - Math.PI / 2;
-      f.position.set(0.02 + 0.42 * t, 0.02, 0.06 + i * 0.003);
-      plane.add(f);
-    }
-    return pivot;
+    mesh.renderOrder = order++;
+    group.add(mesh);
+    model.add(group);
+    return group;
   }
-  const wingR = buildWing(1);
-  const wingL = buildWing(-1);
-  model.add(wingR, wingL);
-
-  // Cola: plumas en abanico + dos serpentinas con espirales (como el logo)
-  const tail = new THREE.Group();
-  tail.position.set(-0.95, -0.02, 0);
-  model.add(tail);
-  const tailStops = [[0, PALETTE.blue], [0.4, PALETTE.violet], [1, PALETTE.magenta]];
-  for (let i = 0; i < 6; i++) {
-    const t = i / 5;
-    const geo = featherGeometry(THREE.MathUtils.lerp(0.8, 1.05, Math.sin(t * Math.PI)), 0.22, tailStops);
-    const f = new THREE.Mesh(geo, featherMat);
-    f.rotation.set(0, THREE.MathUtils.lerp(-0.5, 0.5, t), Math.PI / 2 + 0.25);
-    tail.add(f);
-  }
-
-  function curlCurve(len, drop, z, turns, radius) {
-    const pts = [];
-    pts.push(new THREE.Vector3(0, 0, 0));
-    pts.push(new THREE.Vector3(-len * 0.3, -drop * 0.25, z * 0.3));
-    pts.push(new THREE.Vector3(-len * 0.65, -drop * 0.8, z * 0.7));
-    const cx = -len, cy = -drop + radius;
-    // espiral hacia adentro
-    const steps = 26;
-    for (let i = 0; i <= steps; i++) {
-      const a = -Math.PI / 2 - (i / steps) * Math.PI * 2 * turns;
-      const r = radius * (1 - (i / steps) * 0.75);
-      pts.push(new THREE.Vector3(cx + Math.cos(a) * r * -1, cy + Math.sin(a) * r, z));
-    }
-    return new THREE.CatmullRomCurve3(pts);
-  }
-  const streamers = [];
-  [
-    { len: 2.1, drop: 0.9, z: 0.12, turns: 1.3, r: 0.28, stops: [[0, PALETTE.violet], [0.6, PALETTE.magenta], [1, PALETTE.cyan]] },
-    { len: 1.7, drop: 0.45, z: -0.12, turns: 1.15, r: 0.22, stops: [[0, PALETTE.blue], [0.5, PALETTE.violet], [1, PALETTE.yellow]] },
-  ].forEach((cfg) => {
-    const geo = new THREE.TubeGeometry(curlCurve(cfg.len, cfg.drop, cfg.z, cfg.turns, cfg.r), 160, 0.024, 8, false);
-    // degradado a lo largo del tubo (u)
-    const uv = geo.attributes.uv;
-    const colors = new Float32Array(uv.count * 3);
-    for (let i = 0; i < uv.count; i++) {
-      sampleStops(cfg.stops, uv.getX(i), tmpColor);
-      colors.set([tmpColor.r, tmpColor.g, tmpColor.b], i * 3);
-    }
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    const mesh = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial({
-      vertexColors: true, roughness: 0.3, emissive: 0x330044, emissiveIntensity: 0.8, clearcoat: 1,
-    }));
-    tail.add(mesh);
-    streamers.push(mesh);
-  });
 
   // Halo luminoso detrás del ave
   const halo = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: glowTex, color: PALETTE.magenta, transparent: true, opacity: 0.55,
+    map: glowTex, color: PALETTE.magenta, transparent: true, opacity: 0.5,
     blending: THREE.AdditiveBlending, depthWrite: false,
   }));
-  halo.scale.set(5.5, 5.5, 1);
-  halo.position.set(-0.2, 0.2, -0.8);
+  halo.scale.set(5.2, 5.2, 1);
+  halo.position.set(-0.4, 0.3, -0.8);
+  halo.renderOrder = order++;
   heading.add(halo);
-  const halo2 = halo.clone();
-  halo2.material = halo.material.clone();
+  const halo2 = new THREE.Sprite(halo.material.clone());
   halo2.material.color.set(PALETTE.cyan);
-  halo2.material.opacity = 0.35;
-  halo2.scale.set(3.5, 3.5, 1);
-  halo2.position.set(0.9, -0.2, -0.6);
+  halo2.scale.set(3.4, 3.4, 1);
+  halo2.position.set(1.0, 0.1, -0.7);
+  halo2.renderOrder = order++;
   heading.add(halo2);
 
-  // Pose base del modelo: vista 3/4 para que se lea como el logo
-  model.rotation.set(0.35, -0.35, 0.28);
+  // Orden de atrás hacia adelante
+  const aura = layer('aura', -0.5, { opacity: 0.7 });
+  const wingFar = layer('wing', -0.18, { pivot: meta.wingHinge, tint: 0x8c7ad6, opacity: 0.9 });
+  const tail = layer('tail', -0.08, { pivot: meta.tailRoot });
+  layer('body', 0);
+  const wingGhost = layer('wing', 0.06, { pivot: meta.wingHinge, opacity: 0.22, blending: THREE.AdditiveBlending });
+  const wingNear = layer('wing', 0.1, { pivot: meta.wingHinge });
+
+  // Ala lejana: un poco más atrás y abierta hacia el lomo, como en 3/4
+  wingFar.children[0].position.x += 0.12;
+  wingFar.scale.setScalar(0.9);
+  wingFar.rotation.z = -0.22;
+
+  // Eje de aleteo: la línea de la raíz del ala (en el plano de la imagen)
+  const axis = new THREE.Vector3(meta.wingAxis[0], -meta.wingAxis[1], 0).normalize();
+  const qFlap = new THREE.Quaternion();
+  const qSweep = new THREE.Quaternion();
+  const Z = new THREE.Vector3(0, 0, 1);
+  function setWing(group, lift, sweep, baseZ = 0) {
+    qFlap.setFromAxisAngle(axis, lift);
+    qSweep.setFromAxisAngle(Z, baseZ + sweep);
+    group.quaternion.copy(qSweep).multiply(qFlap);
+  }
 
   /* ---------- Estela de polen / partículas ---------- */
   const TRAIL = 420;
@@ -379,6 +226,7 @@ function init() {
   });
   const trail = new THREE.Points(trailGeo, trailMat);
   trail.frustumCulled = false;
+  trail.renderOrder = -1;
   scene.add(trail);
   const trailColors = [PALETTE.magenta, PALETTE.cyan, PALETTE.yellow, PALETTE.violet, PALETTE.lime, 0xffffff].map((c) => new THREE.Color(c));
   let trailHead = 0;
@@ -423,7 +271,7 @@ function init() {
     if (y <= anchors[0].at) return { ...anchors[0].pose, travel: 0 };
     for (let i = 0; i < anchors.length - 1; i++) {
       const a = anchors[i], b = anchors[i + 1];
-      // mantiene la pose en la primera mitad y vuela en la segunda
+      // mantiene la pose en la primera parte y vuela en la segunda
       const start = a.at + (b.at - a.at) * 0.35;
       if (y < b.at) {
         if (y < start) return { ...a.pose, travel: 0 };
@@ -455,7 +303,7 @@ function init() {
   function visitPose(el) {
     const r = el.getBoundingClientRect();
     const onRight = r.left + r.width / 2 > window.innerWidth / 2;
-    // se posa sobre la esquina superior exterior, mirando hacia la tarjeta
+    // se posa junto a la esquina superior exterior, mirando hacia la tarjeta
     const px = onRight ? r.left - 10 : r.right + 10;
     const py = r.top + 20;
     return {
@@ -478,9 +326,9 @@ function init() {
   const pos = new THREE.Vector3(0, -viewH, 0); // entra desde abajo
   const vel = new THREE.Vector3();
   let scale = 0.001;
-  let yaw = 0;       // 0 = mira a la derecha, PI = izquierda
-  let dart = new THREE.Vector2();
-  let dartTarget = new THREE.Vector2();
+  let face = 1;      // 1 = mira a la derecha, -1 = izquierda (se anima al girar)
+  const dart = new THREE.Vector2();
+  const dartTarget = new THREE.Vector2();
   let nextDart = 0;
   let intro = 0;     // 0→1 animación de aparición
   const bornAt = performance.now();
@@ -490,6 +338,7 @@ function init() {
   const clock = new THREE.Clock();
   const tmp = new THREE.Vector3();
   const tailWorld = new THREE.Vector3();
+  const tailLocal = toWorld(430, 760);
   let running = true;
 
   document.addEventListener('visibilitychange', () => {
@@ -554,47 +403,51 @@ function init() {
     bird.position.copy(pos);
     bird.scale.setScalar(Math.max(scale, 0.0001));
 
-    // Hacia dónde mira: dirección de vuelo si se mueve rápido; si no, la pose
+    // Hacia dónde mira: dirección de vuelo si se mueve rápido; si no, la pose.
+    // El giro se hace volteando en X con una rotación 3D intermedia, así las
+    // capas conservan su orden (el ala cercana sigue adelante).
     const speed = vel.length() / Math.max(viewH, 0.001);
     let wantFace = target.face;
     if (Math.abs(vel.x) / viewW > 0.25) wantFace = Math.sign(vel.x);
-    const wantYaw = wantFace > 0 ? 0 : Math.PI;
-    yaw = SNAP ? wantYaw : THREE.MathUtils.lerp(yaw, wantYaw, 1 - Math.exp(-dt * 4));
-    heading.rotation.y = yaw;
+    face = SNAP ? wantFace : THREE.MathUtils.lerp(face, wantFace, 1 - Math.exp(-dt * 5));
+    const sgn = face >= 0 ? 1 : -1;
+    heading.scale.x = sgn * Math.max(Math.abs(face), 0.08);
+    heading.rotation.y = (1 - Math.abs(face)) * 0.9 * sgn;
 
     // Actitud: cabeceo con velocidad, balanceo, mirada al cursor en la intro
     const inHero = sy < window.innerHeight * 0.5 && !visit;
-    const lookX = inHero ? mouse.x * 0.35 : 0;
-    const lookY = inHero ? mouse.y * 0.25 : 0;
-    const pitch = THREE.MathUtils.clamp(-vel.y / viewH * 0.6, -0.6, 0.6);
-    const forward = THREE.MathUtils.clamp(speed * 0.35, 0, 0.5);
-    model.rotation.x = 0.35 + Math.sin(t * 1.3) * 0.06 + lookY * 0.3;
-    model.rotation.y = -0.35 + lookX * (wantFace > 0 ? 1 : -1) + Math.sin(t * 0.7) * (inHero ? 0.18 : 0.06);
-    model.rotation.z = 0.28 + pitch - forward + Math.sin(t * 1.9) * 0.04;
+    const lookX = inHero ? mouse.x * 0.22 : 0;
+    const lookY = inHero ? mouse.y * 0.15 : 0;
+    const pitch = THREE.MathUtils.clamp(-vel.y / viewH * 0.5, -0.4, 0.4);
+    const forward = THREE.MathUtils.clamp(speed * 0.3, 0, 0.35);
+    model.rotation.x = Math.sin(t * 1.3) * 0.06 - lookY;
+    model.rotation.y = lookX * sgn + Math.sin(t * 0.7) * (inHero ? 0.2 : 0.1);
+    model.rotation.z = pitch - forward + Math.sin(t * 1.9) * 0.03;
 
-    // Aleteo: rápido, en ocho, con más energía al viajar
-    const flapHz = reduceMotion ? 2 : 9 + Math.min(speed * 4, 5) + target.travel * 4;
+    // Aleteo: rápido, con más energía al viajar. El ala gira sobre la línea de
+    // su raíz (se escorza en perspectiva) y barre un poco hacia atrás.
+    const flapHz = reduceMotion ? 1.5 : 7 + Math.min(speed * 4, 5) + target.travel * 4;
     const phase = t * flapHz * Math.PI * 2;
-    const lift = 0.35 + Math.sin(phase) * 0.95;
-    const sweep = Math.cos(phase) * 0.25;
-    wingR.rotation.set(-lift, sweep, Math.sin(phase + 0.6) * 0.2);
-    wingL.rotation.set(lift, -sweep, -Math.sin(phase + 0.6) * 0.2);
+    const s = Math.sin(phase);
+    const lift = -0.15 + s * 0.85;
+    const sweep = Math.cos(phase) * 0.12;
+    setWing(wingNear, lift, sweep);
+    setWing(wingGhost, -0.15 + Math.sin(phase - 0.9) * 0.85, Math.cos(phase - 0.9) * 0.12);
+    setWing(wingFar, -lift * 0.8, -sweep, -0.22);
+    wingGhost.children[0].material.opacity = 0.12 + Math.abs(Math.cos(phase)) * 0.18;
 
-    // Cola y serpentinas ondulan
-    tail.rotation.z = Math.sin(t * 2.2) * 0.08 + pitch * 0.4;
-    tail.rotation.y = Math.sin(t * 1.6) * 0.1;
-    streamers.forEach((m, i) => { m.rotation.x = Math.sin(t * 2 + i) * 0.12; });
+    // Cola y aura
+    tail.rotation.z = Math.sin(t * 2.2) * 0.07 + pitch * 0.3;
+    tail.rotation.y = Math.sin(t * 1.6) * 0.18;
+    aura.scale.setScalar(1 + Math.sin(t * 1.1) * 0.03);
+    aura.children[0].material.opacity = (0.6 + Math.sin(t * 1.7) * 0.1) * introEase;
 
     // Halos respiran
-    halo.material.opacity = (0.4 + Math.sin(t * 1.7) * 0.12) * introEase * (inHero ? 1 : 0.7);
-    halo2.material.opacity = (0.28 + Math.sin(t * 2.3 + 1) * 0.1) * introEase;
-
-    // Luces en tormenta: giran alrededor
-    rimMagenta.position.set(pos.x + Math.cos(t * 0.6) * 4, pos.y + 2, 2 + Math.sin(t * 0.6) * 2);
-    rimCyan.position.set(pos.x + Math.cos(t * 0.6 + Math.PI) * 4, pos.y - 1, 3);
+    halo.material.opacity = (0.36 + Math.sin(t * 1.7) * 0.1) * introEase * (inHero ? 1 : 0.7);
+    halo2.material.opacity = (0.24 + Math.sin(t * 2.3 + 1) * 0.08) * introEase;
 
     // Estela: más polen mientras vuela
-    tailWorld.set(-1.2, -0.3, 0);
+    tailWorld.set(tailLocal.x, tailLocal.y, 0);
     model.localToWorld(tailWorld);
     const emitCount = reduceMotion ? 0 : Math.min(6, Math.round(speed * 2.5 + (inHero ? 0.6 : 0.25) + Math.abs(scrollVel) / 900));
     if (emitCount > 0 && Math.random() < 0.9) emit(tailWorld, 0.15 * scale * 3, 0.25, emitCount, 0.12 + scale * 0.12);
