@@ -4,7 +4,7 @@
    ========================================================================= */
 window.BAZAR_CONFIG = {
   // Número con código de país, solo dígitos. Ej: '56912345678'
-  whatsapp: '',
+  whatsapp: '524772402509',
   // Usuario de Instagram sin @. Ej: 'bazarcolibri'
   instagram: '',
   // Correo de contacto. Ej: 'hola@tudominio.com'
