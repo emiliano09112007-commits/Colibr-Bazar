@@ -1,10 +1,10 @@
-# Publica el sitio en GitHub Pages en cada push a la rama principal.
+# Publica el sitio en GitHub Pages en cada push a la rama main.
 # Requiere: Settings → Pages → Source = "GitHub Actions".
 name: Publicar en GitHub Pages
 
 on:
   push:
-    branches: ["claude/vibehost-setup-aqgxn1"]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
