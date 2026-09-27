@@ -10,10 +10,15 @@
   <meta property="og:description" content="Bazar independiente e itinerante de productos y experiencias.">
   <meta property="og:image" content="assets/img/logo.jpg">
   <link rel="icon" type="image/png" href="assets/img/favicon.png">
+  <!-- Fondo oscuro inmediato: evita la pantalla en blanco mientras carga -->
+  <style>html,body{background:#07021a;color:#f4f0ff}</style>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Unbounded:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <!-- Fuentes sin bloquear el primer pintado -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Unbounded:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Unbounded:wght@500;700;900&family=Outfit:wght@300;400;600;700&display=swap"></noscript>
   <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
@@ -34,7 +39,7 @@
 
   <header class="nav" id="nav">
     <a class="nav__brand" href="#inicio" aria-label="Bazar Colibrí, inicio">
-      <img src="assets/img/logo.png" alt="" width="44" height="44">
+      <img src="assets/img/logo-small.webp" alt="" width="44" height="44">
       <span><em>Colibrí</em> Bazar</span>
     </a>
     <button class="nav__toggle" aria-expanded="false" aria-controls="nav-links" aria-label="Abrir menú">
@@ -58,7 +63,7 @@
         <span class="ring ring--2"></span>
         <span class="ring ring--3"></span>
       </div>
-      <img class="hero__fallback" src="assets/img/logo.png" alt="" aria-hidden="true">
+      <img class="hero__fallback" src="assets/img/logo.webp" alt="" aria-hidden="true" fetchpriority="high">
 
       <div class="hero__content">
         <p class="eyebrow reveal">Bazar independiente · Itinerante</p>
@@ -386,7 +391,7 @@
   </main>
 
   <footer class="footer">
-    <img src="assets/img/logo.png" alt="Logo Bazar Colibrí" width="96" height="96" loading="lazy">
+    <img src="assets/img/logo-small.webp" alt="Logo Bazar Colibrí" width="96" height="96" loading="lazy">
     <p><em>Colibrí</em> Bazar · Bazar independiente e itinerante</p>
     <p class="footer__small">© <span id="year">2026</span> Bazar Colibrí</p>
   </footer>

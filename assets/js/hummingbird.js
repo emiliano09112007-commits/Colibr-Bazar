@@ -7,7 +7,9 @@
    - Reposo: aletea en el lugar y hace pequeños "dardos" como uno real.
    - Hover en tarjetas: se acerca a "libar" la tarjeta.
    ========================================================================= */
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+// Three.js se carga DESPUÉS de pintar la página, para que el sitio aparezca rápido
+const THREE_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js';
+let THREE;
 
 const PALETTE = {
   magenta: 0xff1ed2,
@@ -37,13 +39,24 @@ function webglAvailable() {
 if (!canvas || !webglAvailable()) {
   document.documentElement.classList.add('no-webgl');
 } else {
-  init();
+  const boot = async () => {
+    try {
+      THREE = await import(THREE_URL);
+      init();
+    } catch (e) {
+      document.documentElement.classList.add('no-webgl');
+    }
+  };
+  const later = () => ('requestIdleCallback' in window ? requestIdleCallback(boot, { timeout: 1200 }) : setTimeout(boot, 200));
+  if (document.readyState === 'complete') later();
+  else window.addEventListener('load', later, { once: true });
 }
 
 function init() {
   /* ---------- Renderer / escena / cámara ---------- */
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, window.innerWidth < 760 ? 1.5 : 2));
+  const small = window.innerWidth < 760;
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !small, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1.25 : 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.95;
 
