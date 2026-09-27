@@ -353,7 +353,7 @@ function init(meta, textures) {
 
   // Explosión de partículas al aparecer
   setTimeout(() => {
-    for (let i = 0; i < 6; i++) emit(new THREE.Vector3(0, 0, 0), 1.5, 1.6, 40, 0.35);
+    for (let i = 0; i < 3; i++) emit(bird.position, 1.2, 1.1, 30, 0.2);
     document.documentElement.classList.add('bird-ready');
   }, 250);
 
